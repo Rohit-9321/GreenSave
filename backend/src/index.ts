@@ -11,7 +11,7 @@ import analyticsRoutes from './routes/analytics.js'
 import aiRoutes from './routes/ai.js'
 import uploadRoutes from './routes/upload.js'
 import socialRoutes from './routes/social.js'
-
+import type { Request, Response, NextFunction } from 'express';
 const app = express()
 
 // ---- CORS (defaults + env override)
@@ -71,11 +71,11 @@ app.use('/ai', aiRoutes)
 app.use('/upload', uploadRoutes)
 app.use('/social', socialRoutes)
 
-// ---- Global error handler (shows up in Render logs)
-app.use((err: any, _req: any, res: any, _next: any) => {
-  console.error('UNCAUGHT ERROR:', err?.stack || err)
-  res.status(err?.status || 500).json({ error: err?.message || 'Server error' })
-})
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('Request error:', err);
+  const message = err instanceof Error ? err.message : 'Internal Server Error';
+  res.status(500).json({ error: message });
+});
 
 app.listen(PORT, () => {
   console.log(`GreenSteps PRO backend running on http://localhost:${PORT}`)

@@ -1,3 +1,13 @@
-// utils/asyncHandler.ts
-export const asyncHandler = (fn) => (req, res, next) =>
-  Promise.resolve(fn(req, res, next)).catch(next)
+// backend/src/utils/asyncHandler.ts
+import type { Request, Response, NextFunction, RequestHandler } from 'express';
+
+export const asyncHandler = <
+  Req extends Request = Request,
+  Res extends Response = Response
+>(
+  fn: (req: Req, res: Res, next: NextFunction) => Promise<unknown> | unknown
+): RequestHandler => {
+  return (req, res, next) => {
+    Promise.resolve(fn(req as Req, res as Res, next)).catch(next);
+  };
+};
