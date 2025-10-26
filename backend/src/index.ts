@@ -13,7 +13,26 @@ import uploadRoutes from './routes/upload.js'
 import socialRoutes from './routes/social.js'
 
 const app = express()
-app.use(cors({ origin: true, credentials: true }))
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://greensave-1.onrender.com' // your frontend Render domain
+]
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, Postman)
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.includes(origin)) return callback(null, true)
+      return callback(new Error(`Origin ${origin} not allowed by CORS`))
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+)
+app.options('*', cors()) // handle preflight requests
+
 app.use(express.json({ limit: '2mb' }))
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
