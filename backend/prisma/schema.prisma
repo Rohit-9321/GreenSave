@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int              @id @default(autoincrement())
+  email            String           @unique
+  name             String
+  passwordHash     String
+  createdAt        DateTime         @default(now())
+
+  // relations
+  actions          Action[]
+  createdChallenges Challenge[]     @relation("ChallengeCreator")
+  memberships      GroupMember[]
+  ownedGroups      Group[]          @relation("GroupOwner")
+  userChallenges   UserChallenge[]  // <— back relation for UserChallenge
+
+  // OTPs
+  otps             Otp[]
+
+  // Friends (self-relations split into sent/received)
+  friendsSent      Friend[]         @relation("FriendsFrom")
+  friendsReceived  Friend[]         @relation("FriendsTo")
+}
+
+model Challenge {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String
+  startDate   DateTime?
+  endDate     DateTime?
+
+  createdBy   Int?
+  creator     User?      @relation("ChallengeCreator", fields: [createdBy], references: [id])
+
+  members     UserChallenge[]
+  actions     Action[]
+}
+
+model UserChallenge {
+  userId      Int
+  challengeId Int
+  joinedAt    DateTime   @default(now())
+
+  user        User       @relation(fields: [userId], references: [id])
+  challenge   Challenge  @relation(fields: [challengeId], references: [id])
+
+  @@id([userId, challengeId])
+}
+
+model Action {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  challengeId  Int?
+  type         String
+  amount       Float
+  co2Saved     Float
+  proofUrl     String?
+  createdAt    DateTime   @default(now())
+
+  user         User       @relation(fields: [userId], references: [id])
+  challenge    Challenge? @relation(fields: [challengeId], references: [id])
+}
+
+model Group {
+  id        Int          @id @default(autoincrement())
+  name      String
+  ownerId   Int?
+  owner     User?        @relation("GroupOwner", fields: [ownerId], references: [id])  // <— give this relation a name
+  members   GroupMember[]
+  createdAt DateTime     @default(now())
+}
+
+model GroupMember {
+  groupId  Int
+  userId   Int
+  role     String     @default("member")
+  joinedAt DateTime   @default(now())
+
+  group    Group      @relation(fields: [groupId], references: [id])
+  user     User       @relation(fields: [userId], references: [id])
+
+  @@id([groupId, userId])
+}
+
+// Self-relation for friends (two explicit sides)
+model Friend {
+  userId     Int
+  friendId   Int
+  status     String    @default("pending")
+  requestedAt DateTime @default(now())
+
+  user       User      @relation("FriendsFrom", fields: [userId], references: [id])
+  friend     User      @relation("FriendsTo",   fields: [friendId], references: [id])
+
+  @@id([userId, friendId])
+}
+
+model Otp {
+  id        Int      @id @default(autoincrement())
+  email     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+}

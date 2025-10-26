@@ -1,0 +1,96 @@
+# ====================================================
+# 🌱 GreenSteps Advanced PRO - .gitignore
+# Backend + Frontend + Docker + Prisma + TypeScript
+# ====================================================
+
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# Uploads (local mode)
+backend/uploads/
+frontend/public/uploads/
+
+# Build outputs
+dist/
+build/
+.out/
+.cache/
+.tmp/
+.temp/
+coverage/
+*.tsbuildinfo
+
+# Vite / Frontend cache
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.eslintcache
+
+# TypeScript compiled files
+backend/dist/
+backend/build/
+frontend/dist/
+*.js.map
+
+# Prisma
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+backend/prisma/migrations/dev/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Docker-related
+docker-compose.override.yml
+docker-data/
+*.pid
+*.seed
+*.tar
+*.bak
+
+# Misc
+*.local
+*.backup
+*.orig
+*.rej
+*.zip
+*.7z
+
+# ====================================================
+# ✅ Notes:
+# - Keep .env.example (no secrets)
+# - Cloudinary uploads are not stored locally
+# - If using SQLite for dev, ignore *.db but not schema.prisma
+# ====================================================
