@@ -1,3 +1,6 @@
+// -----------------------------
+// Generator & Datasource
+// -----------------------------
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,51 +10,59 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id               Int              @id @default(autoincrement())
-  email            String           @unique
-  name             String
-  passwordHash     String
-  createdAt        DateTime         @default(now())
+// -----------------------------
+// Models
+// -----------------------------
 
-  // relations
-  actions          Action[]
-  createdChallenges Challenge[]     @relation("ChallengeCreator")
-  memberships      GroupMember[]
-  ownedGroups      Group[]          @relation("GroupOwner")
-  userChallenges   UserChallenge[]  // <— back relation for UserChallenge
+model User {
+  id                 Int              @id @default(autoincrement())
+  email              String           @unique
+  name               String
+  passwordHash       String
+  createdAt          DateTime         @default(now())
+
+  // Relations
+  actions            Action[]
+  createdChallenges  Challenge[]      @relation("ChallengeCreator")
+  memberships        GroupMember[]
+  ownedGroups        Group[]          @relation("GroupOwner")
+  userChallenges     UserChallenge[]
 
   // OTPs
-  otps             Otp[]
+  otps               Otp[]
 
   // Friends (self-relations split into sent/received)
-  friendsSent      Friend[]         @relation("FriendsFrom")
-  friendsReceived  Friend[]         @relation("FriendsTo")
+  friendsSent        Friend[]         @relation("FriendsFrom")
+  friendsReceived    Friend[]         @relation("FriendsTo")
 }
 
 model Challenge {
-  id          Int        @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   title       String
   description String
   startDate   DateTime?
   endDate     DateTime?
 
   createdBy   Int?
-  creator     User?      @relation("ChallengeCreator", fields: [createdBy], references: [id])
+  creator     User?           @relation("ChallengeCreator", fields: [createdBy], references: [id], onDelete: SetNull)
 
   members     UserChallenge[]
   actions     Action[]
+  createdAt   DateTime        @default(now())
+
+  @@index([createdBy])
 }
 
 model UserChallenge {
   userId      Int
   challengeId Int
-  joinedAt    DateTime   @default(now())
+  joinedAt    DateTime        @default(now())
 
-  user        User       @relation(fields: [userId], references: [id])
-  challenge   Challenge  @relation(fields: [challengeId], references: [id])
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge   Challenge       @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 
   @@id([userId, challengeId])
+  @@index([challengeId])
 }
 
 model Action {
@@ -64,51 +75,62 @@ model Action {
   proofUrl     String?
   createdAt    DateTime   @default(now())
 
-  user         User       @relation(fields: [userId], references: [id])
-  challenge    Challenge? @relation(fields: [challengeId], references: [id])
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge    Challenge? @relation(fields: [challengeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([challengeId])
 }
 
 model Group {
-  id        Int          @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   name      String
   ownerId   Int?
-  owner     User?        @relation("GroupOwner", fields: [ownerId], references: [id])  // <— give this relation a name
+  owner     User?         @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   members   GroupMember[]
-  createdAt DateTime     @default(now())
+  createdAt DateTime      @default(now())
+
+  @@index([ownerId])
 }
 
 model GroupMember {
   groupId  Int
   userId   Int
-  role     String     @default("member")
-  joinedAt DateTime   @default(now())
+  role     String      @default("member")
+  joinedAt DateTime    @default(now())
 
-  group    Group      @relation(fields: [groupId], references: [id])
-  user     User       @relation(fields: [userId], references: [id])
+  group    Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([groupId, userId])
+  @@index([userId])
 }
 
 // Self-relation for friends (two explicit sides)
 model Friend {
-  userId     Int
-  friendId   Int
-  status     String    @default("pending")
-  requestedAt DateTime @default(now())
+  userId      Int
+  friendId    Int
+  status      String    @default("pending")
+  requestedAt DateTime  @default(now())
 
-  user       User      @relation("FriendsFrom", fields: [userId], references: [id])
-  friend     User      @relation("FriendsTo",   fields: [friendId], references: [id])
+  user        User      @relation("FriendsFrom", fields: [userId], references: [id], onDelete: Cascade)
+  friend      User      @relation("FriendsTo",   fields: [friendId], references: [id], onDelete: Cascade)
 
   @@id([userId, friendId])
+  @@index([friendId])
 }
 
 model Otp {
-  id        Int      @id @default(autoincrement())
-  email     String
-  code      String
-  expiresAt DateTime
-  used      Boolean  @default(false)
+  id         Int       @id @default(autoincrement())
+  email      String
+  code       String
+  expiresAt  DateTime
+  used       Boolean   @default(false)
+  createdAt  DateTime  @default(now())
 
-  userId    Int?
-  user      User?    @relation(fields: [userId], references: [id])
+  userId     Int?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([userId])
 }
